@@ -1,10 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Star, ShoppingCart, Check } from 'lucide-react';
 import { Product } from '../global';
 import { useCart } from '../hooks';
-import { getMockProduct } from '../mock-data';
+import { getMockProduct, getMockProducts } from '../mock-data';
 import { Button } from '@/components/ui/button';
 import ProductGrid from '../components/ProductGrid';
 
@@ -19,19 +18,32 @@ const ProductDetail = () => {
   useEffect(() => {
     if (id) {
       // In a real app, fetch from API
-      const mockProduct = getMockProduct(id);
-      setProduct(mockProduct);
+      const fetchedProduct = getMockProduct(id);
+      
+      // Make sure we're setting a single product, not an array
+      if (Array.isArray(fetchedProduct)) {
+        setProduct(fetchedProduct[0]);
+      } else {
+        setProduct(fetchedProduct);
+      }
 
       // Get related products (mock)
-      const allProducts = getMockProduct();
-      const related = Array.isArray(allProducts) 
-        ? allProducts.filter(p => p.category === mockProduct?.category && p.id !== id).slice(0, 4)
-        : [];
-      setRelatedProducts(related);
+      const allProducts = getMockProducts();
+      
+      // Only filter related products if we have a valid product with category
+      if (product && product.category) {
+        const related = allProducts.filter(p => 
+          p.category === product.category && p.id !== id
+        ).slice(0, 4);
+        setRelatedProducts(related);
+      } else {
+        // Just get some products if we can't find related ones
+        setRelatedProducts(allProducts.slice(0, 4));
+      }
       
       setLoading(false);
     }
-  }, [id]);
+  }, [id, product?.category]);
 
   if (loading) {
     return (
@@ -73,22 +85,22 @@ const ProductDetail = () => {
         <span className="mx-2">/</span>
         <Link to="/products" className="hover:underline">Products</Link>
         <span className="mx-2">/</span>
-        <span className="text-gray-900">{product.title}</span>
+        <span className="text-gray-900">{product?.title}</span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         {/* Product Image */}
         <div className="bg-white rounded-lg p-6 flex items-center justify-center">
           <img 
-            src={product.image} 
-            alt={product.title} 
+            src={product?.image} 
+            alt={product?.title} 
             className="max-h-96 object-contain"
           />
         </div>
 
         {/* Product Details */}
         <div>
-          <h1 className="text-2xl font-bold">{product.title}</h1>
+          <h1 className="text-2xl font-bold">{product?.title}</h1>
           
           {/* Ratings */}
           <div className="flex items-center mt-2">
@@ -96,21 +108,24 @@ const ProductDetail = () => {
               {[...Array(5)].map((_, i) => (
                 <Star 
                   key={i}
-                  className={`h-5 w-5 ${i < Math.floor(product.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                  className={`h-5 w-5 ${i < Math.floor(product?.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
                 />
               ))}
             </div>
-            <span className="ml-2 text-sm text-gray-600">({product.reviews} reviews)</span>
+            <span className="ml-2 text-sm text-gray-600">({product?.reviews} reviews)</span>
           </div>
           
           {/* Price */}
           <div className="mt-4">
-            <span className="text-3xl font-bold">{formattedPrice}</span>
+            <span className="text-3xl font-bold">{product ? new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: 'USD',
+            }).format(product.price) : '$0.00'}</span>
           </div>
           
           {/* Availability */}
           <div className="mt-4">
-            {product.inStock ? (
+            {product?.inStock ? (
               <div className="flex items-center text-green-600">
                 <Check className="h-5 w-5 mr-1" />
                 <span>In Stock</span>
@@ -119,7 +134,7 @@ const ProductDetail = () => {
               <span className="text-red-600">Out of Stock</span>
             )}
             
-            {product.primeEligible && (
+            {product?.primeEligible && (
               <div className="mt-1 flex items-center">
                 <span className="text-blue-600 font-bold mr-1">Prime</span>
                 <span className="text-gray-700">Free Delivery</span>
@@ -130,7 +145,7 @@ const ProductDetail = () => {
           {/* Description */}
           <div className="mt-4">
             <h3 className="text-lg font-medium mb-2">About this item</h3>
-            <p className="text-gray-700">{product.description}</p>
+            <p className="text-gray-700">{product?.description}</p>
           </div>
           
           {/* Add to Cart */}
@@ -150,8 +165,9 @@ const ProductDetail = () => {
             </div>
             
             <Button 
-              onClick={handleAddToCart}
+              onClick={() => product && addToCart(product, quantity)}
               className="btn-amazon-primary w-full md:w-auto flex items-center justify-center"
+              disabled={!product?.inStock}
             >
               <ShoppingCart className="mr-2 h-5 w-5" />
               Add to Cart
