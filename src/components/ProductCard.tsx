@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Star } from 'lucide-react';
 import { Product } from '../global';
-import { useCart } from '../hooks';
+import { useCart } from '../contexts/CartContext';
 import { Button } from '@/components/ui/button';
 
 interface ProductCardProps {

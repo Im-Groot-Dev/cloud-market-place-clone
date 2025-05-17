@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
-import { useCart } from '../hooks';
+import { useCart } from '../contexts/CartContext';
 import CartItem from '../components/CartItem';
 import CartSummary from '../components/CartSummary';
 import { Button } from '@/components/ui/button';

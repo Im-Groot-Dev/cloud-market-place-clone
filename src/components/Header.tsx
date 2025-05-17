@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, ShoppingCart, User, Menu } from 'lucide-react';
-import { useCart } from '../hooks';
+import { useCart } from '../contexts/CartContext';
 
 const Header = () => {
   const { items } = useCart();
